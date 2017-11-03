@@ -49,13 +49,6 @@ type ThenableWithKey = Promise<{ key: string }>;
  * If there is collision on an existing game, new character code is given
  */
 export async function createGame(gameState: Game, gameKey: string = generateGameID()): ThenableWithKey {
-  // return createGameHelper(gameState, gameKey).then((key) => ({
-  //   key,
-  // }), () => {
-  //   console.warn(`Game ID ${gameKey} didn't work, try again with another ID`);
-  //   return createGame(gameState);
-  // });
-
   try {
     return await createGameHelper(gameState, gameKey);
   } catch (error) {
@@ -79,21 +72,6 @@ export async function createGameHelper(gameState: Game, gameKey: string): Thenab
     rootRef.child('games').child(gameKey).set(gameState);
   }
   return { key: gameKey };
-
-  //
-  // return new Promise((resolve, reject) => {
-  //   checkIfGameExists(gameKey)
-  //   .then(({ keyExists }) => {
-  //     if (keyExists) {
-  //       // Game already exists
-  //       reject({
-  //         message: 'Game already exists',
-  //       });
-  //     } else {
-  //       rootRef.child('games').child(gameKey).set(gameState, () => resolve({ key: gameKey }));
-  //     }
-  //   });
-  // });
 }
 
 export function generateGameID(): string {
@@ -152,37 +130,6 @@ export async function joinGame(gameKey: string, playerName: string, playerKey?: 
   // TODO create player
 
   return 2;
-  // console.log('Game exitss? ', gameExists);
-  // return 1;
-  // return new Promise((resolve, reject) => {
-  //   checkIfGameExists(gameKey).then(({ keyExists }) => {
-  //     if (!keyExists) {
-  //       return reject({ message: 'Game does not exist' });
-  //     }
-  //     if (playerKey) {
-  //       checkIfPlayerExists(playerKey).then((playerExists) => {
-  //         if (!playerExists.keyExists) {
-  //           // return reject({ message: 'Player does not exist' });
-  //           // Player does not exist
-  //         }
-  //       });
-  //     }
-  //   });
-  // });
-
-  //
-  //   else if (playerKey) {
-  //     checkIfPlayerExists(playerKey).then((playerExists) => {
-  //       if (playerExists.keyExists) {
-  //         // reuse player
-  //       } else {
-  //         // create player
-  //       }
-  //     });
-  //   } else {
-  //     // create player
-  //   }
-  // });
 }
 
 // export function onPlayerJoined(gameKey: string) {
