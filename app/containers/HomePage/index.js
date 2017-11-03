@@ -39,15 +39,18 @@ export class HomePage extends React.PureComponent { // eslint-disable-line react
       this.props.onSubmitForm();
     }
 
-    /* Create reference to messages in Firebase Database */
-    const messagesRef = firebase.database().ref('messages').orderByKey().limitToLast(100);
-    console.log('Messages: ', messagesRef);
+    // Read the value of messages
+    const messagesRef = firebase.database().ref('messages').once('value');
+    messagesRef.then((dataSnapshot) => {
+      console.log('Messages: ', dataSnapshot.val());
+    });
 
-    // messagesRef.on('child_added', snapshot => {
+    firebase.database().ref('messages').on('child_added', (snapshot) => {
+      console.log('New message added: ', snapshot.key, snapshot.val());
     //   /* Update React state when message is added at Firebase Database */
     //   let message = { text: snapshot.val(), id: snapshot.key };
     //   this.setState({ messages: [message].concat(this.state.messages) });
-    // })
+    });
   }
 
   render() {
