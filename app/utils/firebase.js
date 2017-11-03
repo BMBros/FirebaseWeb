@@ -34,6 +34,19 @@ const TEST = 'test';
 export default firebase.initializeApp(process.env.NODE_ENV === TEST ? e2eConfig : prodConfig);
 const db = firebase.database();
 
+
+const getGamesRef = () => db.ref('games');
+const getGameRef = (gameKey: string) => getGamesRef().child(gameKey);
+const getGamePlayersRef = (gameKey: string) => getGameRef(gameKey).child('players');
+const getGamePlayerRef = (gameKey: string, playerKey: string) => getGamePlayersRef(gameKey).child(playerKey);
+const getGameStatusRef = (gameKey: string) => getGameRef(gameKey).child('status');
+const gameQuestionIndexRef = (gameKey: string) => getGameRef(gameKey).child('currentQuestionIndex');
+const getPlayersRef = () => db.ref('players');
+const getPlayerRef = (playerKey: string) => getPlayersRef().child(playerKey);
+const getPlayerMostRecentGameRef = (playerKey: string) => getPlayerRef(playerKey).child('mostRecentGame');
+const getQuestionsRef = () => db.ref('questions');
+const getQuestionRef = (questionKey: string) => getQuestionsRef().child(questionKey);
+
 export async function loadData(data: Object) {
   const rootRef = firebase.database().ref();
   await rootRef.set(data);
@@ -64,13 +77,11 @@ export async function createGame(gameState: Game, gameKey: string = generateGame
  * If the game already exists it will reject.
  */
 export async function createGameHelper(gameState: Game, gameKey: string): ThenableWithKey {
-  const rootRef = firebase.database().ref();
-
   const { keyExists } = await checkIfGameExists(gameKey);
   if (keyExists) {
     throw new Error('Game already exists');
   } else {
-    rootRef.child('games').child(gameKey).set(gameState);
+    getGameRef(gameKey).set(gameState);
   }
   return { key: gameKey };
 }
@@ -88,10 +99,7 @@ export function generateGameID(): string {
  * Checks if /games/<gameKey> already exists
  */
 export async function checkIfGameExists(gameKey: string): Promise<CheckIfExists> {
-  const game = await db.ref()
-  .child('games')
-  .child(gameKey)
-  .once('value');
+  const game = await getGameRef(gameKey).once('value');
 
   return {
     keyExists: game.exists(),
@@ -99,17 +107,14 @@ export async function checkIfGameExists(gameKey: string): Promise<CheckIfExists>
 }
 
 export async function createPlayer(player: Player): ThenableWithKey {
-  const playerRef = db.ref('players').push();
+  const playerRef = getPlayersRef().push();
   const key = (playerRef: any).key;
   await playerRef.set(player);
   return { key };
 }
 
 export async function checkIfPlayerExists(playerKey: string): Promise<CheckIfExists> {
-  const player = await db.ref()
-  .child('players')
-  .child(playerKey)
-  .once('value');
+  const player = await getPlayerRef(playerKey).once('value');
   return {
     keyExists: player.exists(),
   };
@@ -117,8 +122,9 @@ export async function checkIfPlayerExists(playerKey: string): Promise<CheckIfExi
 
 export async function addPlayerToGame(gameKey: string, playerKey: string) {
   await Promise.all([
-    db.ref('players').child(playerKey).child('mostRecentGame').set(gameKey),
-    db.ref('games').child(gameKey).child('players').child(playerKey).set({
+    getPlayerMostRecentGameRef(playerKey).set(gameKey),
+    // db.ref('players').child(playerKey).child('mostRecentGame').set(gameKey),
+    getGamePlayerRef(gameKey, playerKey).set({
       isConnected: true,
       lastHealthCheck: moment().format(),
     }),
@@ -167,29 +173,29 @@ export function markIncorrectAnswerAsCorrect() {
 }
 
 export async function createQuestion(question: Question): ThenableWithKey {
-  const questionRef = await db.ref('questions').push();
+  const questionRef = await getQuestionsRef().push();
   const key = (questionRef: any).key;
   await questionRef.set(question);
   return { key };
 }
 
 export async function getQuestion(questionKey: string): Promise<Question> {
-  const question = await db.ref('questions').child(questionKey).once('value');
+  const question = await getQuestionRef(questionKey).once('value');
   return question.val();
 }
 export async function getGame(gameKey: string): Promise<Game> {
-  const game = await db.ref('games').child(gameKey).once('value');
+  const game = await getGameRef(gameKey).once('value');
   return game.val();
 }
 export async function getPlayer(playerKey: string): Promise<Player> {
-  const player = await db.ref('players').child(playerKey).once('value');
+  const player = await getPlayerRef(playerKey).once('value');
   return player.val();
 }
 
 export async function advanceGameRound(gameKey: string) {
   // TODO Should we add an option to not do this if people still submitting?
   const game = await getGame(gameKey);
-  await db.ref('games').child(gameKey).child('currentQuestionIndex').set(game.currentQuestionIndex + 1);
+  await gameQuestionIndexRef(gameKey).set(game.currentQuestionIndex + 1);
 }
 
 export async function startGame(gameKey: string) {
@@ -200,9 +206,16 @@ export async function startGame(gameKey: string) {
     throw new Error('Can only start game from the lobby');
   }
   await Promise.all([
-    db.ref('games').child(gameKey).child('status').set('IN-PROGRESS'),
+    getGameStatusRef(gameKey).set('IN-PROGRESS'),
     advanceGameRound(gameKey),
   ]);
+}
+
+export function onGameRoundChange(gameKey: string, callback: Function) {
+  return gameQuestionIndexRef(gameKey).on('value', callback);
+}
+export function offGameRoundChange(gameKey: string, onFunction: Function) {
+  return gameQuestionIndexRef(gameKey).off('value', onFunction);
 }
 
 

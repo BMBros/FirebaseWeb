@@ -15,6 +15,8 @@ import firebase, {
   getGame,
   advanceGameRound,
   startGame,
+  onGameRoundChange,
+  offGameRoundChange,
 } from '../firebase';
 
 import {
@@ -167,6 +169,22 @@ describe('firebase', () => {
         await advanceGameRound('1234');
         game = await getGame('1234');
         expect(game.currentQuestionIndex).toBe(1);
+      });
+      it('should be notified when round changes', async () => {
+        const game = await getGame('1234');
+        expect(game.currentQuestionIndex).toBe(0);
+
+        const onRoundChangeRef = onGameRoundChange('1234', (dataSnapshot) => {
+          console.log('Snapshot change: ', dataSnapshot.val());
+        });
+
+        await advanceGameRound('1234');
+        await advanceGameRound('1234');
+        await advanceGameRound('1234');
+        // game = await getGame('1234');
+        // expect(game.currentQuestionIndex).toBe(1);
+
+        offGameRoundChange('1234', onRoundChangeRef);
       });
     });
     describe('game at lobby', () => {
