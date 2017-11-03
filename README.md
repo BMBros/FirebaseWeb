@@ -1,3 +1,14 @@
+- Run server
+    - `yarn start`
+- Build app
+    - `yarn build`
+- Run firebase local server
+    - `firebase serve`
+- Deploy to firebase
+    - Make sure app is built locally
+    - Run `firebase deploy`
+
+
 <img src="https://raw.githubusercontent.com/react-boilerplate/react-boilerplate-brand/master/assets/banner-metal-optimized.jpg" alt="react boilerplate banner" align="center" />
 
 <br />
