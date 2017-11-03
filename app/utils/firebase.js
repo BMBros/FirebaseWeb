@@ -2,6 +2,11 @@
 
 import firebase from 'firebase';
 
+import type {
+  Question,
+  Game,
+ } from '../types/FirebaseTypes';
+
 // Prod
 const prodConfig = {
   apiKey: 'AIzaSyAvvcW5IGOzi2E0ZH_iS5OZHy4fHXSJ4aU',
@@ -36,27 +41,22 @@ type CreateGameFullfilled = {
   gameID: string
 }
 
-type CreateGameHelperFullfilled = {
-  data: ?Object
-}
-type CreateGameHelperRejected = {
-  message: string,
+type CheckIfExists = {
+  keyExists: boolean
 }
 
-type CheckIfExists = {
-  gameExists: boolean
-}
+type ThenableReference = Promise<void | null>;
 
 /**
  * Creates a game with a random character code.
  * If there is collision on an existing game, new character code is given
  */
-export function createGame(gameID: string = generateGameID()): Promise<CreateGameFullfilled> {
-  return createGameHelper(gameID).then(() => ({
+export function createGame(gameState: Game, gameID: string = generateGameID()): Promise<CreateGameFullfilled> {
+  return createGameHelper(gameState, gameID).then(() => ({
     gameID,
   }), () => {
     console.warn(`Game ID ${gameID} didn't work, try again with another ID`);
-    return createGame();
+    return createGame(gameState);
   });
 }
 
@@ -65,21 +65,18 @@ export function createGame(gameID: string = generateGameID()): Promise<CreateGam
  * If it is created the promise will resolve.
  * If the game already exists it will reject.
  */
-export function createGameHelper(gameID: string): Promise<CreateGameHelperFullfilled | CreateGameHelperRejected> {
+export function createGameHelper(gameState: Game, gameID: string): ThenableReference {
   const rootRef = firebase.database().ref();
-  return new Promise((resolve: (CreateGameHelperFullfilled) => void, reject: (CreateGameHelperRejected) => void) => {
+  return new Promise((resolve, reject) => {
     checkIfGameExists(gameID)
-    .then(({ gameExists }) => {
-      if (gameExists) {
+    .then(({ keyExists }) => {
+      if (keyExists) {
+        // Game already exists
         reject({
           message: 'Game already exists',
         });
       } else {
-        rootRef.child('games').child(gameID).set({ status: 'inactive' }, (callbackResponse) => {
-          resolve({
-            data: callbackResponse,
-          });
-        });
+        rootRef.child('games').child(gameID).set(gameState, resolve);
       }
     });
   });
@@ -103,9 +100,71 @@ export function checkIfGameExists(gameID: string): Promise<CheckIfExists> {
   .child(gameID)
   .once('value')
   .then((dataSnapshot) => Promise.resolve({
-    gameExists: dataSnapshot.exists(),
+    keyExists: dataSnapshot.exists(),
   }));
 }
+
+export function checkIfPlayerExists(playerKey: string): Promise<CheckIfExists> {
+  return db.ref()
+  .child('players')
+  .child(playerKey)
+  .once('value')
+  .then((dataSnapshot) => Promise.resolve({
+    keyExists: dataSnapshot.exists(),
+  }));
+}
+
+export function joinGame(gameID: string, playerName: string, playerKey?: string) {
+  checkIfGameExists(gameID).then(({ keyExists }) => {
+    if (keyExists) {
+      // Error to user that invalid game
+    } else if (playerKey) {
+      checkIfPlayerExists(playerKey).then((playerExists) => {
+        if (playerExists.keyExists) {
+          // reuse player
+        } else {
+          // create player
+        }
+      });
+    } else {
+      // create player
+    }
+  });
+}
+
+export function listenForPlayers() {
+  // TODO
+}
+
+export function markIncorrectAnswerAsCorrect() {
+  // TODO
+}
+
+export function createQuestion(question: Question): ThenableReference {
+  return new Promise((resolve) => {
+    db.ref().child('questions').push(question, resolve);
+  });
+}
+
+export function getQuestion(questionKey: string) {
+  return db.ref('questions').child(questionKey).once('value').then((dataSnapshot) => dataSnapshot.val());
+}
+
+export function getGame(gameKey: string) {
+  return db.ref('games').child(gameKey).once('value').then((dataSnapshot) => dataSnapshot.val());
+}
+
+// export function advanceGameRound(gameID: string) {
+//   // TODO
+// }
+//
+// export function getScore(gameID: string) {
+//   // TODO
+// }
+//
+// export function answerQuestion(gameID: string, playerKey: string, questionID: string, answer: string) {
+//   // TODO
+// }
 
 export function readSomething() {
   const messagesRef = firebase.database().ref('messages').once('value');

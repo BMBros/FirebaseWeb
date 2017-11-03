@@ -11,3 +11,11 @@ export const oneGame = {
     },
   },
 };
+export const questions = {
+  questions: {
+    '-Ky237LlqjKRQ1WdxhIr': {
+      answer: 'red',
+      question: 'What color is mario?',
+    },
+  },
+};
