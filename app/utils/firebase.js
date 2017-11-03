@@ -5,6 +5,7 @@ import firebase from 'firebase';
 import type {
   Question,
   Game,
+  Player,
  } from '../types/FirebaseTypes';
 
 // Prod
@@ -37,27 +38,32 @@ export function loadData(data: Object) {
   return rootRef.set(data);
 }
 
-type CreateGameFullfilled = {
-  gameID: string
-}
-
 type CheckIfExists = {
   keyExists: boolean
 }
 
 type ThenableReference = Promise<void | null>;
 
+type ThenableWithKey = Promise<{ key: string }>;
+
 /**
  * Creates a game with a random character code.
  * If there is collision on an existing game, new character code is given
  */
-export function createGame(gameState: Game, gameID: string = generateGameID()): Promise<CreateGameFullfilled> {
-  return createGameHelper(gameState, gameID).then(() => ({
-    gameID,
-  }), () => {
-    console.warn(`Game ID ${gameID} didn't work, try again with another ID`);
+export async function createGame(gameState: Game, gameKey: string = generateGameID()): ThenableWithKey {
+  // return createGameHelper(gameState, gameKey).then((key) => ({
+  //   key,
+  // }), () => {
+  //   console.warn(`Game ID ${gameKey} didn't work, try again with another ID`);
+  //   return createGame(gameState);
+  // });
+
+  try {
+    return await createGameHelper(gameState, gameKey);
+  } catch (error) {
+    console.warn(`Game ID ${gameKey} didn't work, try again with another ID`);
     return createGame(gameState);
-  });
+  }
 }
 
 /**
@@ -65,21 +71,31 @@ export function createGame(gameState: Game, gameID: string = generateGameID()): 
  * If it is created the promise will resolve.
  * If the game already exists it will reject.
  */
-export function createGameHelper(gameState: Game, gameID: string): ThenableReference {
+export async function createGameHelper(gameState: Game, gameKey: string): ThenableWithKey {
   const rootRef = firebase.database().ref();
-  return new Promise((resolve, reject) => {
-    checkIfGameExists(gameID)
-    .then(({ keyExists }) => {
-      if (keyExists) {
-        // Game already exists
-        reject({
-          message: 'Game already exists',
-        });
-      } else {
-        rootRef.child('games').child(gameID).set(gameState, resolve);
-      }
-    });
-  });
+
+  const { keyExists } = await checkIfGameExists(gameKey);
+  if (keyExists) {
+    throw new Error('Game already exists');
+  } else {
+    rootRef.child('games').child(gameKey).set(gameState);
+  }
+  return { key: gameKey };
+
+  //
+  // return new Promise((resolve, reject) => {
+  //   checkIfGameExists(gameKey)
+  //   .then(({ keyExists }) => {
+  //     if (keyExists) {
+  //       // Game already exists
+  //       reject({
+  //         message: 'Game already exists',
+  //       });
+  //     } else {
+  //       rootRef.child('games').child(gameKey).set(gameState, () => resolve({ key: gameKey }));
+  //     }
+  //   });
+  // });
 }
 
 export function generateGameID(): string {
@@ -92,16 +108,24 @@ export function generateGameID(): string {
 }
 
 /**
- * Checks if /games/<gameID> already exists
+ * Checks if /games/<gameKey> already exists
  */
-export function checkIfGameExists(gameID: string): Promise<CheckIfExists> {
+export function checkIfGameExists(gameKey: string): Promise<CheckIfExists> {
   return db.ref()
   .child('games')
-  .child(gameID)
+  .child(gameKey)
   .once('value')
   .then((dataSnapshot) => Promise.resolve({
     keyExists: dataSnapshot.exists(),
   }));
+}
+
+export function createPlayer(player: Player): ThenableWithKey {
+  return new Promise((resolve) => {
+    const playerRef = db.ref('players').push();
+    const key = (playerRef: any).key;
+    playerRef.set(player, () => resolve({ key }));
+  });
 }
 
 export function checkIfPlayerExists(playerKey: string): Promise<CheckIfExists> {
@@ -114,27 +138,59 @@ export function checkIfPlayerExists(playerKey: string): Promise<CheckIfExists> {
   }));
 }
 
-export function joinGame(gameID: string, playerName: string, playerKey?: string) {
-  checkIfGameExists(gameID).then(({ keyExists }) => {
-    if (keyExists) {
-      // Error to user that invalid game
-    } else if (playerKey) {
-      checkIfPlayerExists(playerKey).then((playerExists) => {
-        if (playerExists.keyExists) {
-          // reuse player
-        } else {
-          // create player
-        }
-      });
-    } else {
-      // create player
+export async function joinGame(gameKey: string, playerName: string, playerKey?: string) {
+  const game = await checkIfGameExists(gameKey);
+  if (!game.keyExists) {
+    throw new Error('Game does not exist');
+  }
+  if (playerKey) {
+    const player = await checkIfPlayerExists(playerKey);
+    if (!player.keyExists) {
+      throw new Error('Player does not exist');
     }
-  });
+  }
+  // TODO use player if they exist, otherwise
+  // const player = await createPlayer(playerName);
+  // TODO create player
+
+  return 2;
+  // console.log('Game exitss? ', gameExists);
+  // return 1;
+  // return new Promise((resolve, reject) => {
+  //   checkIfGameExists(gameKey).then(({ keyExists }) => {
+  //     if (!keyExists) {
+  //       return reject({ message: 'Game does not exist' });
+  //     }
+  //     if (playerKey) {
+  //       checkIfPlayerExists(playerKey).then((playerExists) => {
+  //         if (!playerExists.keyExists) {
+  //           // return reject({ message: 'Player does not exist' });
+  //           // Player does not exist
+  //         }
+  //       });
+  //     }
+  //   });
+  // });
+
+  //
+  //   else if (playerKey) {
+  //     checkIfPlayerExists(playerKey).then((playerExists) => {
+  //       if (playerExists.keyExists) {
+  //         // reuse player
+  //       } else {
+  //         // create player
+  //       }
+  //     });
+  //   } else {
+  //     // create player
+  //   }
+  // });
 }
 
-export function listenForPlayers() {
-  // TODO
-}
+// export function onPlayerJoined(gameKey: string) {
+//   // TODO
+//   db.ref('games').child(gameKey).child('players');
+// }
 
 export function markIncorrectAnswerAsCorrect() {
   // TODO
@@ -154,15 +210,15 @@ export function getGame(gameKey: string) {
   return db.ref('games').child(gameKey).once('value').then((dataSnapshot) => dataSnapshot.val());
 }
 
-// export function advanceGameRound(gameID: string) {
+// export function advanceGameRound(gameKey: string) {
 //   // TODO
 // }
 //
-// export function getScore(gameID: string) {
+// export function getScore(gameKey: string) {
 //   // TODO
 // }
 //
-// export function answerQuestion(gameID: string, playerKey: string, questionID: string, answer: string) {
+// export function answerQuestion(gameKey: string, playerKey: string, questionID: string, answer: string) {
 //   // TODO
 // }
 

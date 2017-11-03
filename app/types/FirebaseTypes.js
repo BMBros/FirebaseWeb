@@ -8,7 +8,7 @@ type QuestionKey = string;
 
 export type Player = {
   name: string,
-  mostRecentGame: GameKey,
+  mostRecentGame?: GameKey,
 };
 
 export type Game = {
