@@ -17,6 +17,21 @@ export const oneGame = {
     },
   },
 };
+export const gameAtLobby = {
+  games: {
+    1234: {
+      currentQuestionIndex: 0,
+      status: 'LOBBY',
+    },
+  },
+};
+export const gameStarted = {
+  games: {
+    1234: {
+      status: 'IN-PROGRESS',
+    },
+  },
+};
 export const questions = {
   questions: {
     '-Ky237LlqjKRQ1WdxhIr': {

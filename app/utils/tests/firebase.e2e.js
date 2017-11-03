@@ -14,6 +14,7 @@ import firebase, {
   createPlayer,
   getGame,
   advanceGameRound,
+  startGame,
 } from '../firebase';
 
 import {
@@ -21,6 +22,8 @@ import {
   oneGame,
   questions,
   empty,
+  gameAtLobby,
+  gameStarted,
 } from './firebaseData/data';
 
 const momentTime = '2017-02-04T00:00:00+00:00';
@@ -164,6 +167,26 @@ describe('firebase', () => {
         await advanceGameRound('1234');
         game = await getGame('1234');
         expect(game.currentQuestionIndex).toBe(1);
+      });
+    });
+    describe('game at lobby', () => {
+      beforeEach(async () => {
+        await loadData(gameAtLobby);
+      });
+      it('should be able to start game not yet started', async () => {
+        let game = await getGame('1234');
+        expect(game.status).toBe('LOBBY');
+        await startGame('1234');
+        game = await getGame('1234');
+        expect(game.status).toBe('IN-PROGRESS');
+      });
+    });
+    describe('game already started', () => {
+      beforeEach(async () => {
+        await loadData(gameStarted);
+      });
+      it('should not be able to start game already started', async () => {
+        await expect(startGame('1234')).rejects.toEqual(new Error('Can only start game from the lobby'));
       });
     });
   });

@@ -192,6 +192,20 @@ export async function advanceGameRound(gameKey: string) {
   await db.ref('games').child(gameKey).child('currentQuestionIndex').set(game.currentQuestionIndex + 1);
 }
 
+export async function startGame(gameKey: string) {
+  // TODO Should we add an option to not do this if people still submitting?
+  const game = await getGame(gameKey);
+  const isLobby = game.status === 'LOBBY';
+  if (!isLobby) {
+    throw new Error('Can only start game from the lobby');
+  }
+  await Promise.all([
+    db.ref('games').child(gameKey).child('status').set('IN-PROGRESS'),
+    advanceGameRound(gameKey),
+  ]);
+}
+
+
 // export function getScore(gameKey: string) {
 //   // TODO
 // }
