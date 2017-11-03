@@ -12,6 +12,7 @@ export const oneGame = {
   },
   games: {
     1234: {
+      currentQuestionIndex: 0,
       someKey: 'someValue',
     },
   },

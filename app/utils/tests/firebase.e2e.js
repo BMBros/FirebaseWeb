@@ -13,6 +13,7 @@ import firebase, {
   joinGame,
   createPlayer,
   getGame,
+  advanceGameRound,
 } from '../firebase';
 
 import {
@@ -55,6 +56,7 @@ describe('firebase', () => {
       const player = await joinGame('1234', 'Steven', 'someFakePlayer');
       const game = await getGame('1234');
       expect(game).toEqual({
+        currentQuestionIndex: 0,
         players: {
           [player.key]: {
             isConnected: true,
@@ -68,6 +70,7 @@ describe('firebase', () => {
       await joinGame('1234', 'Steven', 'somePlayerID');
       const game = await getGame('1234');
       expect(game).toEqual({
+        currentQuestionIndex: 0,
         players: {
           somePlayerID: {
             isConnected: true,
@@ -154,6 +157,13 @@ describe('firebase', () => {
         const success = await createGame(initalGameState, '1234');
         expect(success.key).toBeDefined();
         expect(console.warn).toHaveBeenCalled();
+      });
+      it('should be able to advance game round', async () => {
+        let game = await getGame('1234');
+        expect(game.currentQuestionIndex).toBe(0);
+        await advanceGameRound('1234');
+        game = await getGame('1234');
+        expect(game.currentQuestionIndex).toBe(1);
       });
     });
   });

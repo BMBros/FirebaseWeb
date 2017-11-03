@@ -173,20 +173,25 @@ export async function createQuestion(question: Question): ThenableWithKey {
   return { key };
 }
 
-export async function getQuestion(questionKey: string) {
+export async function getQuestion(questionKey: string): Promise<Question> {
   const question = await db.ref('questions').child(questionKey).once('value');
   return question.val();
 }
-
-export async function getGame(gameKey: string) {
+export async function getGame(gameKey: string): Promise<Game> {
   const game = await db.ref('games').child(gameKey).once('value');
   return game.val();
 }
+export async function getPlayer(playerKey: string): Promise<Player> {
+  const player = await db.ref('players').child(playerKey).once('value');
+  return player.val();
+}
 
-// export function advanceGameRound(gameKey: string) {
-//   // TODO
-// }
-//
+export async function advanceGameRound(gameKey: string) {
+  // TODO Should we add an option to not do this if people still submitting?
+  const game = await getGame(gameKey);
+  await db.ref('games').child(gameKey).child('currentQuestionIndex').set(game.currentQuestionIndex + 1);
+}
+
 // export function getScore(gameKey: string) {
 //   // TODO
 // }
@@ -194,10 +199,3 @@ export async function getGame(gameKey: string) {
 // export function answerQuestion(gameKey: string, playerKey: string, questionID: string, answer: string) {
 //   // TODO
 // }
-
-export function readSomething() {
-  const messagesRef = firebase.database().ref('messages').once('value');
-  return messagesRef.then((dataSnapshot) =>
-    // console.log('Messages: ', dataSnapshot.val());
-     dataSnapshot.val());
-}
