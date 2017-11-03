@@ -33,16 +33,14 @@ const TEST = 'test';
 export default firebase.initializeApp(process.env.NODE_ENV === TEST ? e2eConfig : prodConfig);
 const db = firebase.database();
 
-export function loadData(data: Object) {
+export async function loadData(data: Object) {
   const rootRef = firebase.database().ref();
-  return rootRef.set(data);
+  await rootRef.set(data);
 }
 
 type CheckIfExists = {
   keyExists: boolean
 }
-
-type ThenableReference = Promise<void | null>;
 
 type ThenableWithKey = Promise<{ key: string }>;
 
@@ -110,32 +108,32 @@ export function generateGameID(): string {
 /**
  * Checks if /games/<gameKey> already exists
  */
-export function checkIfGameExists(gameKey: string): Promise<CheckIfExists> {
-  return db.ref()
+export async function checkIfGameExists(gameKey: string): Promise<CheckIfExists> {
+  const game = await db.ref()
   .child('games')
   .child(gameKey)
-  .once('value')
-  .then((dataSnapshot) => Promise.resolve({
-    keyExists: dataSnapshot.exists(),
-  }));
+  .once('value');
+
+  return {
+    keyExists: game.exists(),
+  };
 }
 
-export function createPlayer(player: Player): ThenableWithKey {
-  return new Promise((resolve) => {
-    const playerRef = db.ref('players').push();
-    const key = (playerRef: any).key;
-    playerRef.set(player, () => resolve({ key }));
-  });
+export async function createPlayer(player: Player): ThenableWithKey {
+  const playerRef = db.ref('players').push();
+  const key = (playerRef: any).key;
+  await playerRef.set(player);
+  return { key };
 }
 
-export function checkIfPlayerExists(playerKey: string): Promise<CheckIfExists> {
-  return db.ref()
+export async function checkIfPlayerExists(playerKey: string): Promise<CheckIfExists> {
+  const player = await db.ref()
   .child('players')
   .child(playerKey)
-  .once('value')
-  .then((dataSnapshot) => Promise.resolve({
-    keyExists: dataSnapshot.exists(),
-  }));
+  .once('value');
+  return {
+    keyExists: player.exists(),
+  };
 }
 
 export async function joinGame(gameKey: string, playerName: string, playerKey?: string) {
@@ -196,18 +194,21 @@ export function markIncorrectAnswerAsCorrect() {
   // TODO
 }
 
-export function createQuestion(question: Question): ThenableReference {
-  return new Promise((resolve) => {
-    db.ref().child('questions').push(question, resolve);
-  });
+export async function createQuestion(question: Question): ThenableWithKey {
+  const questionRef = await db.ref('questions').push();
+  const key = (questionRef: any).key;
+  await questionRef.set(question);
+  return { key };
 }
 
-export function getQuestion(questionKey: string) {
-  return db.ref('questions').child(questionKey).once('value').then((dataSnapshot) => dataSnapshot.val());
+export async function getQuestion(questionKey: string) {
+  const question = await db.ref('questions').child(questionKey).once('value');
+  return question.val();
 }
 
-export function getGame(gameKey: string) {
-  return db.ref('games').child(gameKey).once('value').then((dataSnapshot) => dataSnapshot.val());
+export async function getGame(gameKey: string) {
+  const game = await db.ref('games').child(gameKey).once('value');
+  return game.val();
 }
 
 // export function advanceGameRound(gameKey: string) {
