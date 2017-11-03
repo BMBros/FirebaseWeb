@@ -42,6 +42,7 @@ export class HomePage extends React.PureComponent { // eslint-disable-line react
     /* Create reference to messages in Firebase Database */
     const messagesRef = firebase.database().ref('messages').orderByKey().limitToLast(100);
     console.log('Messages: ', messagesRef);
+
     // messagesRef.on('child_added', snapshot => {
     //   /* Update React state when message is added at Firebase Database */
     //   let message = { text: snapshot.val(), id: snapshot.key };
