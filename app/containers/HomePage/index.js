@@ -14,6 +14,7 @@ import { createStructuredSelector } from 'reselect';
 
 import injectReducer from 'utils/injectReducer';
 import injectSaga from 'utils/injectSaga';
+import firebase from 'utils/firebase';
 import { makeSelectRepos, makeSelectLoading, makeSelectError } from 'containers/App/selectors';
 import H2 from 'components/H2';
 import ReposList from 'components/ReposList';
@@ -37,6 +38,15 @@ export class HomePage extends React.PureComponent { // eslint-disable-line react
     if (this.props.username && this.props.username.trim().length > 0) {
       this.props.onSubmitForm();
     }
+
+    /* Create reference to messages in Firebase Database */
+    const messagesRef = firebase.database().ref('messages').orderByKey().limitToLast(100);
+    console.log('Messages: ', messagesRef);
+    // messagesRef.on('child_added', snapshot => {
+    //   /* Update React state when message is added at Firebase Database */
+    //   let message = { text: snapshot.val(), id: snapshot.key };
+    //   this.setState({ messages: [message].concat(this.state.messages) });
+    // })
   }
 
   render() {
