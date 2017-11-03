@@ -1,4 +1,5 @@
 /**
+ * @flow
  * app.js
  *
  * This is the entry file for the application, only setup and boilerplate
@@ -66,7 +67,7 @@ const history = createHistory();
 const store = configureStore(initialState, history);
 const MOUNT_NODE = document.getElementById('app');
 
-const render = (messages) => {
+const render = (messages: Object) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
@@ -91,7 +92,7 @@ if (module.hot) {
 
 // Chunked polyfill for browsers without Intl support
 if (!window.Intl) {
-  (new Promise((resolve) => {
+  (new Promise((resolve: Function) => {
     resolve(import('intl'));
   }))
     .then(() => Promise.all([
