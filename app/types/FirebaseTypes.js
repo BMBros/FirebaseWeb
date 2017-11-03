@@ -19,7 +19,7 @@ export type Game = {
   players: {
     [key: PlayerKey]: {
       isConnected: boolean,
-      lastHealthCheck: number
+      lastHealthCheck: string // iso date
     }
   },
   hasSubmitted: {

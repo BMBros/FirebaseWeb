@@ -1,4 +1,6 @@
 // @flow
+import MockDate from 'mockdate';
+import moment from 'moment';
 
 import firebase, {
   loadData,
@@ -10,6 +12,7 @@ import firebase, {
   getQuestion,
   joinGame,
   createPlayer,
+  getGame,
 } from '../firebase';
 
 import {
@@ -19,8 +22,11 @@ import {
   empty,
 } from './firebaseData/data';
 
+const momentTime = '2017-02-04T00:00:00+00:00';
+
 describe('firebase', () => {
   beforeAll((done) => {
+    MockDate.set(moment('2017-02-04'), 0);
     // Prime Firebase connection so first test doesn't time out
     firebase.database().ref().once('value').then(() => {
       done();
@@ -42,18 +48,34 @@ describe('firebase', () => {
       await loadData(oneGame);
     });
     it('should not let player join non-existant game', async () => {
-      try {
-        await joinGame('FAKE_KEY', 'Steven');
-      } catch (error) {
-        expect(error.message).toBe('Game does not exist');
-      }
+      await expect(joinGame('FAKE_KEY', 'Steven')).rejects.toEqual(new Error('Game does not exist'));
     });
     it('should not let fake player join real game', async () => {
-      try {
-        await joinGame('1234', 'Steven', 'Fake Player');
-      } catch (error) {
-        expect(error.message).toBe('Player does not exist');
-      }
+      // await expect(joinGame('1234', 'Steven', 'Fake Player')).rejects.toEqual(new Error('Player does not exist'));
+      const player = await joinGame('1234', 'Steven', 'someFakePlayer');
+      const game = await getGame('1234');
+      expect(game).toEqual({
+        players: {
+          [player.key]: {
+            isConnected: true,
+            lastHealthCheck: momentTime,
+          },
+        },
+        someKey: 'someValue',
+      });
+    });
+    it('should let real player join real game', async () => {
+      await joinGame('1234', 'Steven', 'somePlayerID');
+      const game = await getGame('1234');
+      expect(game).toEqual({
+        players: {
+          somePlayerID: {
+            isConnected: true,
+            lastHealthCheck: momentTime,
+          },
+        },
+        someKey: 'someValue',
+      });
     });
   });
   describe('questions', () => {

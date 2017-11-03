@@ -5,6 +5,11 @@ export const noGames = {
   games: {},
 };
 export const oneGame = {
+  players: {
+    somePlayerID: {
+      name: 'Frank',
+    },
+  },
   games: {
     1234: {
       someKey: 'someValue',

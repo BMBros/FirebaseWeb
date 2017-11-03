@@ -1,6 +1,7 @@
 // @flow
 
 import firebase from 'firebase';
+import moment from 'moment';
 
 import type {
   Question,
@@ -114,22 +115,46 @@ export async function checkIfPlayerExists(playerKey: string): Promise<CheckIfExi
   };
 }
 
-export async function joinGame(gameKey: string, playerName: string, playerKey?: string) {
+export async function addPlayerToGame(gameKey: string, playerKey: string) {
+  await Promise.all([
+    db.ref('players').child(playerKey).child('mostRecentGame').set(gameKey),
+    db.ref('games').child(gameKey).child('players').child(playerKey).set({
+      isConnected: true,
+      lastHealthCheck: moment().format(),
+    }),
+  ]);
+}
+
+/**
+ * Allows player to join an existing game.
+ * If game does not exist an error will be thrown.
+ * If player key is not passed, or if player key doesn't exist, a new player will be created.
+ * Returns key of player that has joind the game
+ */
+export async function joinGame(gameKey: string, playerName: string, playerKey?: string): ThenableWithKey {
   const game = await checkIfGameExists(gameKey);
   if (!game.keyExists) {
     throw new Error('Game does not exist');
   }
+  let playerKeyToUse;
   if (playerKey) {
     const player = await checkIfPlayerExists(playerKey);
-    if (!player.keyExists) {
-      throw new Error('Player does not exist');
+    if (player.keyExists) {
+      playerKeyToUse = playerKey;
     }
   }
-  // TODO use player if they exist, otherwise
-  // const player = await createPlayer(playerName);
-  // TODO create player
+  if (!playerKeyToUse) {
+    const newPlayer = await createPlayer({
+      name: playerName,
+    });
+    playerKeyToUse = newPlayer.key;
+  }
 
-  return 2;
+  await addPlayerToGame(gameKey, playerKeyToUse);
+
+  return {
+    key: playerKeyToUse,
+  };
 }
 
 // export function onPlayerJoined(gameKey: string) {
