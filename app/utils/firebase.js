@@ -32,26 +32,72 @@ export function loadData(data: Object) {
   return rootRef.set(data);
 }
 
-export function createGame(gameID: string) {
+type CreateGameFullfilled = {
+  gameID: string
+}
+
+type CreateGameHelperFullfilled = {
+  data: ?Object
+}
+type CreateGameHelperRejected = {
+  message: string,
+}
+
+type CheckIfExists = {
+  gameExists: boolean
+}
+
+/**
+ * Creates a game with a random character code.
+ * If there is collision on an existing game, new character code is given
+ */
+export function createGame(gameID: string = generateGameID()): Promise<CreateGameFullfilled | CreateGameHelperRejected> {
+  return createGameHelper(gameID).then(() => ({
+    gameID,
+  }), () => {
+    console.warn(`Game ID ${gameID} didn't work, try again with another ID`);
+    return createGame();
+  });
+}
+
+/**
+ * Attempts to create the initial game state for a game with the given ID.
+ * If it is created the promise will resolve.
+ * If the game already exists it will reject.
+ */
+export function createGameHelper(gameID: string): Promise<CreateGameHelperFullfilled | CreateGameHelperRejected> {
   const rootRef = firebase.database().ref();
-  // return rootRef.child('games').child(gameID).set({ status: 'inactive' }, callback);
-  return new Promise((resolve: Function, reject: Function) => {
+  return new Promise((resolve: (CreateGameHelperFullfilled) => void, reject: (CreateGameHelperRejected) => void) => {
     checkIfGameExists(gameID)
     .then(({ gameExists }) => {
       if (gameExists) {
         reject({
-          error: true,
           message: 'Game already exists',
         });
       } else {
-        rootRef.child('games').child(gameID).set({ status: 'inactive' }, resolve);
+        rootRef.child('games').child(gameID).set({ status: 'inactive' }, (callbackResponse) => {
+          resolve({
+            data: callbackResponse,
+          });
+        });
       }
     });
-        //  window.onload = resolve;
   });
 }
 
-export function checkIfGameExists(gameID: string) {
+export function generateGameID(): string {
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789';
+
+  for (let i = 0; i < 5; i += 1) { text += possible.charAt(Math.floor(Math.random() * possible.length)); }
+
+  return text;
+}
+
+/**
+ * Checks if /games/<gameID> already exists
+ */
+export function checkIfGameExists(gameID: string): Promise<CheckIfExists> {
   return db.ref()
   .child('games')
   .child(gameID)
@@ -59,10 +105,6 @@ export function checkIfGameExists(gameID: string) {
   .then((dataSnapshot) => Promise.resolve({
     gameExists: dataSnapshot.exists(),
   }));
-}
-
-export function someFunction() {
-  console.log('hello');
 }
 
 export function readSomething() {

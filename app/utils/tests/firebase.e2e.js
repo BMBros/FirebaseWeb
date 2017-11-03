@@ -1,11 +1,16 @@
+// @flow
+
+
 // import { MockFirebase } from 'firebase-mock';
-import {
+import firebase, {
   // someFunction,
   // readSomething,
   // clear,
   loadData,
-  createGame,
+  createGameHelper,
   checkIfGameExists,
+  generateGameID,
+  createGame,
 } from '../firebase';
 
 import {
@@ -14,6 +19,18 @@ import {
 } from './firebaseData/data';
 
 describe('firebase', () => {
+  beforeAll((done) => {
+    // Prime Firebase connection so first test doesn't time out
+    firebase.database().ref().once('value').then(() => {
+      done();
+    });
+  });
+  describe('generateGameID', () => {
+    it('should create a random game ID of length 5', () => {
+      expect(generateGameID()).toBeTruthy();
+      expect(generateGameID().length).toBe(5);
+    });
+  });
   describe('no games present', () => {
     beforeEach((done) => {
       // loadData(empty).then(() => {
@@ -29,8 +46,13 @@ describe('firebase', () => {
         console.warn('Error: ', reject);
       });
     });
-    it('createGame should create game', (done) => {
-      createGame('1234').then(() => {
+    it('createGameHelper should create game', (done) => {
+      createGameHelper('1234').then(() => {
+        done();
+      });
+    });
+    it('should create game in Firebase with random game ID', (done) => {
+      createGame().then(() => {
         done();
       });
     });
@@ -48,22 +70,32 @@ describe('firebase', () => {
         done();
       });
     });
-    it('createGame should not create game with same ID when it already exists', (done) => {
-      createGame('1234').then(() => {
-      }, (reject) => {
-        expect(reject.error).toBe(true);
-        done(reject);
+    it('createGameHelper should not create game with same ID when it already exists', (done) => {
+      createGameHelper('1234').then(() => {
+      }, () => {
+        // If rejected, we're good
+        done();
       });
     });
-    it('createGame should be able to create game with different ID ', (done) => {
-      createGame('5342').then(() => {
+    it('createGameHelper should be able to create game with different ID ', (done) => {
+      createGameHelper('5342').then(() => {
+        done();
+      });
+    });
+    it.only('creageGame should retry if existing game ID is taken', (done) => {
+      console.warn = jest.fn();
+      expect(console.warn).not.toHaveBeenCalled();
+      createGame('1234').then((resolution) => {
+        console.log('Resolution: ', resolution);
+        // Warning is logged when the method tries to repeat itself to make a new id
+        expect(console.warn).toHaveBeenCalled();
         done();
       });
     });
   });
-  describe('someFunction', () => {
-    it('should do something', () => {
-      // someFunction();
-    });
-  });
+  // describe('someFunction', () => {
+  //   it('should do something', () => {
+  //     // someFunction();
+  //   });
+  // });
 });
