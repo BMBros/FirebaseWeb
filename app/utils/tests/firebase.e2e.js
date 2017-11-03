@@ -51,20 +51,21 @@ describe('firebase', () => {
         done();
       });
     });
-    it('should create game in Firebase with random game ID', (done) => {
-      createGame().then(() => {
+    it('creageGame should create game in Firebase with random game ID', (done) => {
+      createGame().then((success) => {
+        expect(success.gameID).toBeTruthy();
         done();
       });
     });
   });
-  describe('games present', () => {
+  describe('one game present', () => {
     beforeEach((done) => {
       loadData(oneGame).then(() => {
         expect('Game to resolve rather than reject').toBeTruthy();
         done();
       });
     });
-    it('checkIfGameExists should be true', (done) => {
+    it('checkIfGameExists of proper ID should be true', (done) => {
       checkIfGameExists('1234').then((result) => {
         expect(result.gameExists).toBe(true);
         done();
@@ -82,20 +83,15 @@ describe('firebase', () => {
         done();
       });
     });
-    it.only('creageGame should retry if existing game ID is taken', (done) => {
+    it('creageGame should retry if existing game ID is taken', (done) => {
       console.warn = jest.fn();
       expect(console.warn).not.toHaveBeenCalled();
-      createGame('1234').then((resolution) => {
-        console.log('Resolution: ', resolution);
+      createGame('1234').then((success) => {
+        expect(success.gameID).toBeTruthy();
         // Warning is logged when the method tries to repeat itself to make a new id
         expect(console.warn).toHaveBeenCalled();
         done();
       });
     });
   });
-  // describe('someFunction', () => {
-  //   it('should do something', () => {
-  //     // someFunction();
-  //   });
-  // });
 });

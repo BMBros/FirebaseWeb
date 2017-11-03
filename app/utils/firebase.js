@@ -51,7 +51,7 @@ type CheckIfExists = {
  * Creates a game with a random character code.
  * If there is collision on an existing game, new character code is given
  */
-export function createGame(gameID: string = generateGameID()): Promise<CreateGameFullfilled | CreateGameHelperRejected> {
+export function createGame(gameID: string = generateGameID()): Promise<CreateGameFullfilled> {
   return createGameHelper(gameID).then(() => ({
     gameID,
   }), () => {
