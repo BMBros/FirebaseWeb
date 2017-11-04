@@ -4,7 +4,6 @@ import moment from 'moment';
 
 import firebase, {
   loadData,
-  createGameHelper,
   checkIfGameExists,
   generateGameID,
   createGame,
@@ -19,6 +18,8 @@ import firebase, {
   getGameQuestionByRound,
   answerQuestion,
   getAnswers,
+  getQuestionKeysForQuestionnaire,
+  getQuestionsFromQuestionKeys,
 } from '../firebase';
 
 import {
@@ -74,7 +75,7 @@ describe('firebase', () => {
     });
 
     it('should create a player and supply the key', async () => {
-      const player = await createPlayer({ name: 'Steven' });
+      const player = await createPlayer('Steven');
       expect(player.key).toBeDefined();
     });
   });
@@ -143,14 +144,6 @@ describe('firebase', () => {
     });
   });
   describe('games', () => {
-    const initalGameState = {
-      questionnaire: 'FAKE_KEY',
-      status: 'LOBBY',
-      round: 0,
-      totalQuestions: 0,
-      players: {},
-      hasSubmitted: {},
-    };
     describe('no games present', () => {
       beforeEach(async () => {
         await loadData(noGames);
@@ -159,12 +152,8 @@ describe('firebase', () => {
         const game = await checkIfGameExists('1234');
         expect(game.keyExists).toBe(false);
       });
-      it('createGameHelper should create game', async () => {
-        const game = await createGameHelper(initalGameState, '1234');
-        expect(game.key).toBeDefined();
-      });
-      it('creageGame should create game in Firebase with random game ID', async () => {
-        const game = await createGame(initalGameState);
+      it('createGame should create game in Firebase with random game ID', async () => {
+        const game = await createGame('A1');
         expect(game.key).toBeDefined();
       });
     });
@@ -176,21 +165,21 @@ describe('firebase', () => {
         const game = await checkIfGameExists('1234');
         expect(game.keyExists).toBe(true);
       });
-      it('createGameHelper should not create game with same ID when it already exists', async () => {
+      it('createGame should not create game with same ID when it already exists', async () => {
         try {
-          await createGameHelper(initalGameState, '1234');
+          await createGame('A1', '1234');
         } catch (error) {
           expect(error.message).toBe('Game already exists');
         }
       });
-      it('createGameHelper should be able to create game with different ID ', async () => {
-        const game = await createGameHelper(initalGameState, '5342');
+      it('createGame should be able to create game with different ID ', async () => {
+        const game = await createGame('A1', '5342');
         expect(game.key).toBeDefined();
       });
       it('createGame should retry if existing game ID is taken', async () => {
         console.warn = jest.fn();
         expect(console.warn).not.toHaveBeenCalled();
-        const success = await createGame(initalGameState, '1234');
+        const success = await createGame('A1', '1234');
         expect(success.key).toBeDefined();
         expect(console.warn).toHaveBeenCalled();
       });
@@ -230,7 +219,28 @@ describe('firebase', () => {
         const game2 = await getGame('1234');
         expect(game2.status).toBe('IN-PROGRESS');
         expect(game2.round).toBe(0);
-        expect(game2.question).toBeDefined();
+        expect(game2.currentQuestion).toBeDefined();
+      });
+      it('should get all questions', async () => {
+        const questionKeys = await getQuestionKeysForQuestionnaire('A1');
+        const questionsData = await getQuestionsFromQuestionKeys(questionKeys);
+        expect(questionsData).toEqual([
+          {
+            key: 'A',
+            question: 'Question A',
+            answer: 'Answer A',
+          },
+          {
+            key: 'B',
+            question: 'Question B',
+            answer: 'Answer B',
+          },
+          {
+            key: 'C',
+            question: 'Question C',
+            answer: 'Answer C',
+          },
+        ]);
       });
     });
     describe('game already started', () => {

@@ -3,6 +3,31 @@ export const empty = {
 };
 export const noGames = {
   games: {},
+  questionnaires: {
+    A1: [
+      'A',
+      'B',
+      'C',
+    ],
+  },
+  questions: {
+    A: {
+      question: 'Question A',
+      answer: 'Answer A',
+    },
+    B: {
+      question: 'Question B',
+      answer: 'Answer B',
+    },
+    C: {
+      question: 'Question C',
+      answer: 'Answer C',
+    },
+    D: {
+      question: 'Question D',
+      answer: 'Answer D',
+    },
+  },
 };
 export const oneGame = {
   players: {
@@ -27,12 +52,26 @@ export const gameAtLobby = {
   questionnaires: {
     A1: [
       'A',
+      'B',
+      'C',
     ],
   },
   questions: {
     A: {
       question: 'Question A',
       answer: 'Answer A',
+    },
+    B: {
+      question: 'Question B',
+      answer: 'Answer B',
+    },
+    C: {
+      question: 'Question C',
+      answer: 'Answer C',
+    },
+    D: {
+      question: 'Question D',
+      answer: 'Answer D',
     },
   },
 };

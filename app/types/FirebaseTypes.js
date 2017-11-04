@@ -6,17 +6,19 @@ type GameStatus = 'LOBBY' | 'IN-PROGRESS' | 'COMPLETE';
 type PlayerKey = string;
 type QuestionKey = string;
 
+type QuestionsMap = { [key: QuestionKey]: Question };
+
 export type Player = {
   name: string,
   mostRecentGame?: GameKey,
 };
 
 export type Game = {
-  questionnaire: QuestionnaireKey,
   status: GameStatus,
+  questionnaire: QuestionnaireKey,
+  questions: Array<Question>,
   round?: number,
-  question?: Question,
-  totalQuestions: number,
+  currentQuestion?: Question,
   players: {
     [key: PlayerKey]: {
       isConnected: boolean,
@@ -67,9 +69,7 @@ export type Scheme = {
   questionnaires: {
     [key: QuestionnaireKey]: Questionnaire
   },
-  questions: {
-    [key: QuestionKey]: Question
-  },
+  questions: QuestionsMap,
   scores: {
     [key: GameKey]: ScoreBoard
   }

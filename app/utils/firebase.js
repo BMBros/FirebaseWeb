@@ -2,6 +2,7 @@
 
 import firebase from 'firebase';
 import moment from 'moment';
+import _ from 'lodash';
 
 import type {
   Question,
@@ -41,9 +42,9 @@ const getGamesRef = () => db.ref('games');
 const getGameRef = (gameKey: string) => getGamesRef().child(gameKey);
 const getGamePlayersRef = (gameKey: string) => getGameRef(gameKey).child('players');
 const getGamePlayerRef = (gameKey: string, playerKey: string) => getGamePlayersRef(gameKey).child(playerKey);
-const getGameStatusRef = (gameKey: string) => getGameRef(gameKey).child('status');
+// const getGameStatusRef = (gameKey: string) => getGameRef(gameKey).child('status');
 const getGameQuestionnaireRef = (gameKey: string) => getGameRef(gameKey).child('questionnaire');
-const getGameQuestioneRef = (gameKey: string) => getGameRef(gameKey).child('question');
+const getGameQuestioneRef = (gameKey: string) => getGameRef(gameKey).child('currentQuestion');
 const getGameRoundRef = (gameKey: string) => getGameRef(gameKey).child('round');
 
 // Players
@@ -79,13 +80,14 @@ type ThenableWithKey = Promise<{ key: string }>;
 /**
  * Creates a game with a random character code.
  * If there is collision on an existing game, new character code is given
+ * Loads all questions into the game instance
  */
-export async function createGame(gameState: Game, gameKey: string = generateGameID()): ThenableWithKey {
+export async function createGame(questionnaireKey: string, gameKey: string = generateGameID()): ThenableWithKey {
   try {
-    return await createGameHelper(gameState, gameKey);
+    return await createGameHelper(questionnaireKey, gameKey);
   } catch (error) {
     console.warn(`Game ID ${gameKey} didn't work, try again with another ID`);
-    return createGame(gameState);
+    return createGame(questionnaireKey);
   }
 }
 
@@ -94,16 +96,28 @@ export async function createGame(gameState: Game, gameKey: string = generateGame
  * If it is created the promise will resolve.
  * If the game already exists it will reject.
  */
-export async function createGameHelper(gameState: Game, gameKey: string): ThenableWithKey {
+async function createGameHelper(questionnaireKey: string, gameKey: string): ThenableWithKey {
   const { keyExists } = await checkIfGameExists(gameKey);
   if (keyExists) {
     throw new Error('Game already exists');
   } else {
+    const questions = await getQuestionsFromQuestionnaire(questionnaireKey);
+    const gameState: Game = {
+      questionnaire: questionnaireKey,
+      questions,
+      status: 'LOBBY',
+      players: {},
+      hasSubmitted: {},
+    };
+
     getGameRef(gameKey).set(gameState);
   }
   return { key: gameKey };
 }
 
+/**
+ * Generates a random ID (used for game key)
+ */
 export function generateGameID(): string {
   let text = '';
   const possible = 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789';
@@ -124,10 +138,13 @@ export async function checkIfGameExists(gameKey: string): Promise<CheckIfExists>
   };
 }
 
-export async function createPlayer(player: Player): ThenableWithKey {
+/**
+ * Creates player with the specified name
+ */
+export async function createPlayer(name: string): ThenableWithKey {
   const playerRef = getPlayersRef().push();
   const key = (playerRef: any).key;
-  await playerRef.set(player);
+  await playerRef.set({ name });
   return { key };
 }
 
@@ -168,9 +185,7 @@ export async function joinGame(gameKey: string, playerName: string, playerKey?: 
     }
   }
   if (!playerKeyToUse) {
-    const newPlayer = await createPlayer({
-      name: playerName,
-    });
+    const newPlayer = await createPlayer(playerName);
     playerKeyToUse = newPlayer.key;
   }
 
@@ -179,15 +194,6 @@ export async function joinGame(gameKey: string, playerName: string, playerKey?: 
   return {
     key: playerKeyToUse,
   };
-}
-
-// export function onPlayerJoined(gameKey: string) {
-//   // TODO
-//   db.ref('games').child(gameKey).child('players');
-// }
-
-export function markIncorrectAnswerAsCorrect() {
-  // TODO
 }
 
 export async function createQuestion(question: Question): ThenableWithKey {
@@ -231,10 +237,13 @@ export async function startGame(gameKey: string) {
     throw new Error('Can only start game from the lobby');
   }
 
-  const question = await getGameQuestionByRound(gameKey, 0);
-  getGameStatusRef(gameKey).set('IN-PROGRESS');
-  getGameRoundRef(gameKey).set(0);
-  getGameQuestioneRef(gameKey).set(question);
+  const questions = await getQuestionsFromQuestionnaire(game.questionnaire);
+  getGameRef(gameKey).update({
+    status: 'IN-PROGRESS',
+    round: 0,
+    currentQuestion: questions[0],
+    questions,
+  });
 }
 
 export function onGameRoundChange(gameKey: string, callback: Function) {
@@ -260,6 +269,40 @@ export async function getGameQuestionByRound(gameKey: string, gameRound: number)
   return questionRef.val();
 }
 
+export async function getQuestionsFromQuestionnaire(questionnaireKey: string) {
+  const questionKeys = await getQuestionKeysForQuestionnaire(questionnaireKey);
+  const questions = await getQuestionsFromQuestionKeys(questionKeys);
+  return questions;
+}
+
+export async function getQuestionKeysForQuestionnaire(questionnaireKey: string) {
+  const questionByIndexRef = await getQuestionnaireRef(questionnaireKey).once('value');
+  return questionByIndexRef.val();
+}
+
+/**
+ * Iterates over question keys to return all question data
+ */
+export async function getQuestionsFromQuestionKeys(questionKeys: Array<string>, questionsArray: Array<Question> = []): Promise<Array<Question>> {
+  const myKeys = _.clone(questionKeys);
+
+  if (myKeys.length === 0) {
+    return questionsArray;
+  }
+
+  const myQuestions = _.clone(questionsArray);
+  const firstKey = myKeys.splice(0, 1)[0];
+  const questionData = await getQuestionsRef().child(firstKey).once('value');
+
+  myQuestions.push({
+    key: firstKey,
+    ...questionData.val(),
+  });
+  // myQuestions[firstKey] = ;
+
+  return getQuestionsFromQuestionKeys(myKeys, myQuestions);
+}
+
 export async function answerQuestion(gameKey: string, playerKey: string, gameRound: number, answer: string) {
   getPlayerScoreBoardRef(gameKey, playerKey).child(gameRound.toString(10)).set({ answer });
 }
@@ -277,3 +320,12 @@ export async function getAnswers(gameKey: string, playerKey: string) {
 // export function answerQuestion(gameKey: string, playerKey: string, questionID: string, answer: string) {
 //   // TODO
 // }
+
+// export function onPlayerJoined(gameKey: string) {
+//   // TODO
+//   db.ref('games').child(gameKey).child('players');
+// }
+
+export function markIncorrectAnswerAsCorrect() {
+  // TODO
+}
