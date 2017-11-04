@@ -319,7 +319,7 @@ describe('firebase', () => {
           },
         ]);
       });
-      it.only('should be able to end game from lobby', async () => {
+      it('should be able to end game from lobby', async () => {
         await endGame('1234');
 
         const game = await getGame('1234');
