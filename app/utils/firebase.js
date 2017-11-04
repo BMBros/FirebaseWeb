@@ -65,6 +65,7 @@ const getQuestionRef = (questionKey: string) => getQuestionsRef().child(question
 const getScoresRef = () => db.ref('scores');
 const getScoreBoardRef = (gameKey: string) => getScoresRef().child(gameKey);
 const getPlayerScoreBoardRef = (gameKey: string, playerKey: string) => getScoreBoardRef(gameKey).child(playerKey);
+const getPlayerScoreBoardByRoundRef = (gameKey: string, playerKey: string, round: number) => getPlayerScoreBoardRef(gameKey, playerKey).child(round.toString(10));
 
 export async function loadData(data: Object) {
   const rootRef = firebase.database().ref();
@@ -314,6 +315,17 @@ export async function answerQuestion(gameKey: string, playerKey: string, gameRou
 export async function getAnswers(gameKey: string, playerKey: string) {
   const answers = await getPlayerScoreBoardRef(gameKey, playerKey).once('value');
   return answers.val();
+}
+
+export async function getPlayerAnswerByRound(gameKey: string, playerKey: string, round: number) {
+  const answers = await getPlayerScoreBoardByRoundRef(gameKey, playerKey, round).once('value');
+  return answers.val();
+}
+
+export async function overrideResponseAsCorrect(gameKey: string, playerKey: string, round: number) {
+  await getPlayerScoreBoardByRoundRef(gameKey, playerKey, round).update({
+    isCorrectAdminOverride: true,
+  });
 }
 
 // export function getScore(gameKey: string) {

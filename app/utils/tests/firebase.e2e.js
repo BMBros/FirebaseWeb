@@ -20,6 +20,8 @@ import firebase, {
   getAnswers,
   getQuestionKeysForQuestionnaire,
   getQuestionsFromQuestionKeys,
+  overrideResponseAsCorrect,
+  getPlayerAnswerByRound,
 } from '../firebase';
 
 import {
@@ -30,6 +32,7 @@ import {
   gameAtLobby,
   gameStarted,
   gameWithQuestions,
+  playerResponse,
 } from './firebaseData/data';
 
 const momentTime = '2017-02-04T00:00:00+00:00';
@@ -59,7 +62,7 @@ describe('firebase', () => {
       await loadData(gameWithQuestions);
     });
 
-    it.only('should be able to add a player score', async () => {
+    it('should be able to add a player score', async () => {
       const response = 'my answer';
       answerQuestion('1234', 'playerKey', 0, response);
 
@@ -90,6 +93,26 @@ describe('firebase', () => {
     });
   });
 
+  describe('admin', () => {
+    describe('overrideResponseAsCorrect', () => {
+      beforeEach(async () => {
+        await loadData(playerResponse);
+      });
+      it('should override response as correct', async () => {
+        const gameKey = '1234';
+        const playerKey = 'playerKey';
+        const round = 0;
+
+        const answer = await getPlayerAnswerByRound(gameKey, playerKey, round);
+        expect(answer.isCorrectAdminOverride).not.toBeDefined();
+
+        overrideResponseAsCorrect(gameKey, playerKey, round);
+
+        const answerAfterCorrection = await getPlayerAnswerByRound(gameKey, playerKey, round);
+        expect(answerAfterCorrection.isCorrectAdminOverride).toBe(true);
+      });
+    });
+  });
 
   describe('join game', () => {
     beforeEach(async () => {

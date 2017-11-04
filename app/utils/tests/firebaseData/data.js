@@ -142,3 +142,16 @@ export const gameWithQuestions = {
     },
   },
 };
+
+export const playerResponse = {
+  scores: {
+    1234: {
+      playerKey: [
+        {
+          isCorrect: false,
+          resonse: 'something wrong',
+        },
+      ],
+    },
+  },
+};
