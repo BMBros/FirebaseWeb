@@ -70,7 +70,7 @@ export type Scheme = {
   questions: {
     [key: QuestionKey]: Question
   },
-  scoreBoard: {
+  scores: {
     [key: GameKey]: ScoreBoard
   }
 }

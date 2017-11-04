@@ -59,6 +59,11 @@ const getQuestionnaireQuestionByIndexRef = (questionnaireKey: string, index: num
 const getQuestionsRef = () => db.ref('questions');
 const getQuestionRef = (questionKey: string) => getQuestionsRef().child(questionKey);
 
+// Score
+const getScoresRef = () => db.ref('scores');
+const getScoreBoardRef = (gameKey: string) => getScoresRef().child(gameKey);
+const getPlayerScoreBoardRef = (gameKey: string, playerKey: string) => getScoreBoardRef(gameKey).child(playerKey);
+
 export async function loadData(data: Object) {
   const rootRef = firebase.database().ref();
   await rootRef.set(data);
@@ -253,6 +258,16 @@ export async function getGameQuestionByRound(gameKey: string, gameRound: number)
 
   return questionRef.val();
 }
+
+export async function answerQuestion(gameKey: string, playerKey: string, gameRound: number, answer: string) {
+  getPlayerScoreBoardRef(gameKey, playerKey).child(gameRound.toString(10)).set(answer);
+}
+
+export async function getAnswers(gameKey: string, playerKey: string) {
+  const answers = await getPlayerScoreBoardRef(gameKey, playerKey).once('value');
+  return answers.val();
+}
+
 
 // export function getScore(gameKey: string) {
 //   // TODO

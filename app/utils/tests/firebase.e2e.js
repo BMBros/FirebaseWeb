@@ -17,6 +17,8 @@ import firebase, {
   startGame,
   onGameRoundChange,
   getGameQuestionByRound,
+  answerQuestion,
+  getAnswers,
 } from '../firebase';
 
 import {
@@ -49,6 +51,19 @@ describe('firebase', () => {
         answer: 'Answer A',
         question: 'Question A',
       });
+    });
+  });
+  describe('scoreoard', () => {
+    beforeEach(async () => {
+      await loadData(gameWithQuestions);
+    });
+
+    it('should be able to add a player score', async () => {
+      const answer = 'my answer';
+      answerQuestion('1234', 'playerKey', 0, answer);
+
+      const result = await getAnswers('1234', 'playerKey');
+      expect(result).toEqual([answer]);
     });
   });
   describe('create player', () => {
