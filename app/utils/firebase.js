@@ -43,7 +43,7 @@ const getGamePlayerRef = (gameKey: string, playerKey: string) => getGamePlayersR
 const getGameStatusRef = (gameKey: string) => getGameRef(gameKey).child('status');
 const getGameQuestionnaireRef = (gameKey: string) => getGameRef(gameKey).child('questionnaire');
 const getGameQuestioneRef = (gameKey: string) => getGameRef(gameKey).child('question');
-const getGameQuestionIndexRef = (gameKey: string) => getGameRef(gameKey).child('currentQuestionIndex');
+const getGameRoundRef = (gameKey: string) => getGameRef(gameKey).child('round');
 
 // Players
 const getPlayersRef = () => db.ref('players');
@@ -208,11 +208,11 @@ export async function advanceGameRound(gameKey: string) {
   // TODO Should we add an option to not do this if people still submitting?
   const game = await getGame(gameKey);
 
-  const nextGameRound = game.currentQuestionIndex + 1;
+  const nextGameRound = game.round + 1;
   const question = await getGameQuestionByRound(gameKey, nextGameRound);
 
   await Promise.all([
-    getGameQuestionIndexRef(gameKey).set(nextGameRound),
+    getGameRoundRef(gameKey).set(nextGameRound),
     getGameQuestioneRef(gameKey).set(question),
   ]);
 }
@@ -224,15 +224,16 @@ export async function startGame(gameKey: string) {
   if (!isLobby) {
     throw new Error('Can only start game from the lobby');
   }
-  // await Promise.all([
-  await getGameStatusRef(gameKey).set('IN-PROGRESS');
-    // advanceGameRound(gameKey),
-  // ]);
+
+  const question = await getGameQuestionByRound(gameKey, 0);
+  getGameStatusRef(gameKey).set('IN-PROGRESS');
+  getGameRoundRef(gameKey).set(0);
+  getGameQuestioneRef(gameKey).set(question);
 }
 
 export function onGameRoundChange(gameKey: string, callback: Function) {
-  const on = getGameQuestionIndexRef(gameKey).on('value', callback);
-  const off = () => getGameQuestionIndexRef(gameKey).off('value', on);
+  const on = getGameRoundRef(gameKey).on('value', callback);
+  const off = () => getGameRoundRef(gameKey).off('value', on);
   return off;
 }
 

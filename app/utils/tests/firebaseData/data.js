@@ -12,7 +12,7 @@ export const oneGame = {
   },
   games: {
     1234: {
-      currentQuestionIndex: 0,
+      round: 0,
       someKey: 'someValue',
     },
   },
@@ -20,8 +20,19 @@ export const oneGame = {
 export const gameAtLobby = {
   games: {
     1234: {
-      currentQuestionIndex: 0,
+      questionnaire: 'A1',
       status: 'LOBBY',
+    },
+  },
+  questionnaires: {
+    A1: [
+      'A',
+    ],
+  },
+  questions: {
+    A: {
+      question: 'Question A',
+      answer: 'Answer A',
     },
   },
 };
@@ -45,7 +56,7 @@ export const gameWithQuestions = {
     1234: {
       status: 'IN-PROGRESS',
       questionnaire: 'A1',
-      currentQuestionIndex: 0,
+      round: 0,
     },
   },
   questionnaires: {

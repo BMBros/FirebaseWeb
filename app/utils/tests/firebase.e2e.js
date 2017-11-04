@@ -75,7 +75,7 @@ describe('firebase', () => {
       const player = await joinGame('1234', 'Steven', 'someFakePlayer');
       const game = await getGame('1234');
       expect(game).toEqual({
-        currentQuestionIndex: 0,
+        round: 0,
         players: {
           [player.key]: {
             isConnected: true,
@@ -89,7 +89,7 @@ describe('firebase', () => {
       await joinGame('1234', 'Steven', 'somePlayerID');
       const game = await getGame('1234');
       expect(game).toEqual({
-        currentQuestionIndex: 0,
+        round: 0,
         players: {
           somePlayerID: {
             isConnected: true,
@@ -129,7 +129,7 @@ describe('firebase', () => {
     const initalGameState = {
       questionnaire: 'FAKE_KEY',
       status: 'LOBBY',
-      currentQuestionIndex: 0,
+      round: 0,
       totalQuestions: 0,
       players: {},
       hasSubmitted: {},
@@ -179,15 +179,15 @@ describe('firebase', () => {
       });
       it('should be able to advance game round', async () => {
         let game = await getGame('1234');
-        expect(game.currentQuestionIndex).toBe(0);
+        expect(game.round).toBe(0);
         await advanceGameRound('1234');
         game = await getGame('1234');
-        expect(game.currentQuestionIndex).toBe(1);
+        expect(game.round).toBe(1);
       });
       it('should be notified when round changes', async () => {
         const mockCallback = jest.fn();
         const game = await getGame('1234');
-        expect(game.currentQuestionIndex).toBe(0);
+        expect(game.round).toBe(0);
 
         const off = onGameRoundChange('1234', mockCallback);
 
@@ -206,11 +206,14 @@ describe('firebase', () => {
         await loadData(gameAtLobby);
       });
       it('should be able to start game not yet started', async () => {
-        let game = await getGame('1234');
+        const game = await getGame('1234');
         expect(game.status).toBe('LOBBY');
         await startGame('1234');
-        game = await getGame('1234');
-        expect(game.status).toBe('IN-PROGRESS');
+
+        const game2 = await getGame('1234');
+        expect(game2.status).toBe('IN-PROGRESS');
+        expect(game2.round).toBe(0);
+        expect(game2.question).toBeDefined();
       });
     });
     describe('game already started', () => {
