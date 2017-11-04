@@ -23,6 +23,7 @@ import firebase, {
   overrideResponseAsCorrect,
   getPlayerAnswerByRound,
   getGameScore,
+  endGame,
 } from '../firebase';
 
 import {
@@ -317,6 +318,12 @@ describe('firebase', () => {
             answer: 'Answer C',
           },
         ]);
+      });
+      it.only('should be able to end game from lobby', async () => {
+        await endGame('1234');
+
+        const game = await getGame('1234');
+        expect(game.status).toBe('COMPLETE');
       });
     });
     describe('game already started', () => {

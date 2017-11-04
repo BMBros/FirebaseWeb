@@ -253,6 +253,18 @@ export async function startGame(gameKey: string) {
   });
 }
 
+export async function endGame(gameKey: string) {
+  const game = await getGame(gameKey);
+  const isComplete = game.status === 'COMPLETE';
+  if (isComplete) {
+    throw new Error('Can only end games that are not complete');
+  }
+
+  getGameRef(gameKey).update({
+    status: 'COMPLETE',
+  });
+}
+
 export function onGameRoundChange(gameKey: string, callback: Function) {
   const on = getGameRoundRef(gameKey).on('value', callback);
   const off = () => getGameRoundRef(gameKey).off('value', on);
