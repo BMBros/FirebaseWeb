@@ -35,19 +35,27 @@ export default firebase.initializeApp(process.env.NODE_ENV === TEST ? e2eConfig 
 const db = firebase.database();
 
 
+// Games
 const getGamesRef = () => db.ref('games');
 const getGameRef = (gameKey: string) => getGamesRef().child(gameKey);
 const getGamePlayersRef = (gameKey: string) => getGameRef(gameKey).child('players');
 const getGamePlayerRef = (gameKey: string, playerKey: string) => getGamePlayersRef(gameKey).child(playerKey);
 const getGameStatusRef = (gameKey: string) => getGameRef(gameKey).child('status');
 const getGameQuestionnaireRef = (gameKey: string) => getGameRef(gameKey).child('questionnaire');
-const getQuestionnairesRef = () => db.ref('questionnaires');
-const getQuestionnaireRef = (questionnaireKey: string) => getQuestionnairesRef().child(questionnaireKey);
-const getQuestionnaireQuestionByIndexRef = (questionnaireKey: string, index: number) => getQuestionnaireRef(questionnaireKey).child(index);
-const gameQuestionIndexRef = (gameKey: string) => getGameRef(gameKey).child('currentQuestionIndex');
+const getGameQuestioneRef = (gameKey: string) => getGameRef(gameKey).child('question');
+const getGameQuestionIndexRef = (gameKey: string) => getGameRef(gameKey).child('currentQuestionIndex');
+
+// Players
 const getPlayersRef = () => db.ref('players');
 const getPlayerRef = (playerKey: string) => getPlayersRef().child(playerKey);
 const getPlayerMostRecentGameRef = (playerKey: string) => getPlayerRef(playerKey).child('mostRecentGame');
+
+// Questionnaire
+const getQuestionnairesRef = () => db.ref('questionnaires');
+const getQuestionnaireRef = (questionnaireKey: string) => getQuestionnairesRef().child(questionnaireKey);
+const getQuestionnaireQuestionByIndexRef = (questionnaireKey: string, index: number) => getQuestionnaireRef(questionnaireKey).child(index.toString(10));
+
+// Questions
 const getQuestionsRef = () => db.ref('questions');
 const getQuestionRef = (questionKey: string) => getQuestionsRef().child(questionKey);
 
@@ -199,7 +207,14 @@ export async function getPlayer(playerKey: string): Promise<Player> {
 export async function advanceGameRound(gameKey: string) {
   // TODO Should we add an option to not do this if people still submitting?
   const game = await getGame(gameKey);
-  await gameQuestionIndexRef(gameKey).set(game.currentQuestionIndex + 1);
+
+  const nextGameRound = game.currentQuestionIndex + 1;
+  const question = await getGameQuestionByRound(gameKey, nextGameRound);
+
+  await Promise.all([
+    getGameQuestionIndexRef(gameKey).set(nextGameRound),
+    getGameQuestioneRef(gameKey).set(question),
+  ]);
 }
 
 export async function startGame(gameKey: string) {
@@ -216,31 +231,25 @@ export async function startGame(gameKey: string) {
 }
 
 export function onGameRoundChange(gameKey: string, callback: Function) {
-  const on = gameQuestionIndexRef(gameKey).on('value', callback);
-  const off = () => gameQuestionIndexRef(gameKey).off('value', on);
+  const on = getGameQuestionIndexRef(gameKey).on('value', callback);
+  const off = () => getGameQuestionIndexRef(gameKey).off('value', on);
   return off;
 }
 
-// export async function getQuestionFromQuestionnaire(questionnaireKey: string, questionIndex: number) {
-//
-//
-// }
-
-export async function getCurrentQuestionByGame(gameKey: string) {
-  // Query round index and questionnaire key from game
-  const gameRoundRef = await gameQuestionIndexRef(gameKey).once('value');
+/**
+ * Queries the question for a particular game at a particular round index
+ */
+export async function getGameQuestionByRound(gameKey: string, gameRound: number) {
   const gameQuestionnaireRef = await getGameQuestionnaireRef(gameKey).once('value');
 
   // Query question key from questionnaire
   const questionnaireKey = gameQuestionnaireRef.val();
-  const gameRound = gameRoundRef.val();
   const questionByIndexRef = await getQuestionnaireQuestionByIndexRef(questionnaireKey, gameRound).once('value');
 
   // Query question data from questions
   const questionKey = questionByIndexRef.val();
   const questionRef = await getQuestionRef(questionKey).once('value');
 
-  // console.log('QuestioN: ', questionRef.val());
   return questionRef.val();
 }
 

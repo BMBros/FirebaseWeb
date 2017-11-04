@@ -14,7 +14,8 @@ export type Player = {
 export type Game = {
   questionnaire: QuestionnaireKey,
   status: GameStatus,
-  currentQuestionIndex: number,
+  currentQuestionIndex?: number,
+  currentQuestion?: Question,
   totalQuestions: number,
   players: {
     [key: PlayerKey]: {

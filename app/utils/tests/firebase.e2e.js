@@ -16,7 +16,7 @@ import firebase, {
   advanceGameRound,
   startGame,
   onGameRoundChange,
-  getCurrentQuestionByGame,
+  getGameQuestionByRound,
 } from '../firebase';
 
 import {
@@ -39,13 +39,13 @@ describe('firebase', () => {
       done();
     });
   }, 10000);
-  describe.only('questions', () => {
+  describe('questions', () => {
     beforeEach(async () => {
       await loadData(gameWithQuestions);
     });
 
-    it('should create a player and supply the key', async () => {
-      expect(await getCurrentQuestionByGame('1234')).toEqual({
+    it('should be able to read question for the round', async () => {
+      expect(await getGameQuestionByRound('1234', 0)).toEqual({
         answer: 'Answer A',
         question: 'Question A',
       });
@@ -153,7 +153,7 @@ describe('firebase', () => {
     });
     describe('one game present', () => {
       beforeEach(async () => {
-        await loadData(oneGame);
+        await loadData(gameWithQuestions);
       });
       it('checkIfGameExists of proper ID should be true', async () => {
         const game = await checkIfGameExists('1234');
