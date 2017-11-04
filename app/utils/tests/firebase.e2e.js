@@ -63,7 +63,9 @@ describe('firebase', () => {
       answerQuestion('1234', 'playerKey', 0, answer);
 
       const result = await getAnswers('1234', 'playerKey');
-      expect(result).toEqual([answer]);
+      expect(result).toEqual([{
+        answer,
+      }]);
     });
   });
   describe('create player', () => {

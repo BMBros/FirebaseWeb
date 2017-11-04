@@ -19,19 +19,20 @@ const prodConfig = {
   messagingSenderId: '793181201',
 };
 
-// E2E Tests
-const e2eConfig = {
-  apiKey: 'AIzaSyCXoyazhR7gJcyapC3vb8Hbj6rVtlPcJ1Q',
-  authDomain: 'trivia-e2e-test.firebaseapp.com',
-  databaseURL: 'https://trivia-e2e-test.firebaseio.com',
-  projectId: 'trivia-e2e-test',
-  storageBucket: '',
-  messagingSenderId: '373151645209',
-};
+// // E2E Tests
+// const e2eConfig = {
+//   apiKey: 'AIzaSyCXoyazhR7gJcyapC3vb8Hbj6rVtlPcJ1Q',
+//   authDomain: 'trivia-e2e-test.firebaseapp.com',
+//   databaseURL: 'https://trivia-e2e-test.firebaseio.com',
+//   projectId: 'trivia-e2e-test',
+//   storageBucket: '',
+//   messagingSenderId: '373151645209',
+// };
+//
+// const TEST = 'test';
 
-const TEST = 'test';
-
-export default firebase.initializeApp(process.env.NODE_ENV === TEST ? e2eConfig : prodConfig);
+// export default firebase.initializeApp(process.env.NODE_ENV === TEST ? e2eConfig : prodConfig);
+export default firebase.initializeApp(prodConfig);
 const db = firebase.database();
 
 
@@ -260,7 +261,7 @@ export async function getGameQuestionByRound(gameKey: string, gameRound: number)
 }
 
 export async function answerQuestion(gameKey: string, playerKey: string, gameRound: number, answer: string) {
-  getPlayerScoreBoardRef(gameKey, playerKey).child(gameRound.toString(10)).set(answer);
+  getPlayerScoreBoardRef(gameKey, playerKey).child(gameRound.toString(10)).set({ answer });
 }
 
 export async function getAnswers(gameKey: string, playerKey: string) {
