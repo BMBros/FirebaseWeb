@@ -59,15 +59,25 @@ describe('firebase', () => {
       await loadData(gameWithQuestions);
     });
 
-    it('should be able to add a player score', async () => {
-      const answer = 'my answer';
-      answerQuestion('1234', 'playerKey', 0, answer);
+    it.only('should be able to add a player score', async () => {
+      const response = 'my answer';
+      answerQuestion('1234', 'playerKey', 0, response);
 
       const result = await getAnswers('1234', 'playerKey');
       expect(result).toEqual([{
-        answer,
+        response,
       }]);
     });
+    // Manuall eyeball validation, as it takes 4s? For function to fire
+    // it('should have answer validated by firebase function', async () => {
+    //   const answer = 'answer a';
+    //   answerQuestion('1234', 'playerKey', 0, answer);
+    //
+    //   const result = await getAnswers('1234', 'playerKey');
+    //   expect(result).toEqual([{
+    //     answer,
+    //   }]);
+    // });
   });
   describe('create player', () => {
     beforeEach(async () => {

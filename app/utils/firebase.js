@@ -308,7 +308,7 @@ export async function getQuestionsFromQuestionKeys(questionKeys: Array<string>, 
 }
 
 export async function answerQuestion(gameKey: string, playerKey: string, gameRound: number, answer: string) {
-  getPlayerScoreBoardRef(gameKey, playerKey).child(gameRound.toString(10)).set({ answer });
+  getPlayerScoreBoardRef(gameKey, playerKey).child(gameRound.toString(10)).set({ response: answer });
 }
 
 export async function getAnswers(gameKey: string, playerKey: string) {
@@ -316,14 +316,10 @@ export async function getAnswers(gameKey: string, playerKey: string) {
   return answers.val();
 }
 
-
 // export function getScore(gameKey: string) {
 //   // TODO
 // }
 //
-// export function answerQuestion(gameKey: string, playerKey: string, questionID: string, answer: string) {
-//   // TODO
-// }
 
 // export function onPlayerJoined(gameKey: string) {
 //   // TODO

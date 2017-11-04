@@ -42,7 +42,8 @@ export type Question = {
 export type Answer = {
   response: string,
   isCorrect?: boolean,
-  adminOverrideAsCorrect?: boolean
+  adminOverrideAsCorrect?: boolean,
+  originalQuestion?: Question
 }
 
 export type ScoreBoard = {
