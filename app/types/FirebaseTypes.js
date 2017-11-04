@@ -8,6 +8,12 @@ type QuestionKey = string;
 
 type QuestionsMap = { [key: QuestionKey]: Question };
 
+export type PlayersAnswers = {
+  [key: PlayerKey]: {
+    answers: Array<Answer>
+  }
+}
+
 export type Player = {
   name: string,
   mostRecentGame?: GameKey,
@@ -36,7 +42,8 @@ export type Question = {
   // type: 'MULTIPLE-CHOICE' | 'FREEHAND',
   options?: Array<string>,
   image?: string,
-  key?: string
+  key?: string,
+  points: number
 }
 
 export type Answer = {
@@ -52,11 +59,7 @@ export type ScoreBoard = {
   scores: {
     [key: PlayerKey]: number
   },
-  players: {
-    [key: PlayerKey]: {
-      answers: Array<Answer>
-    }
-  }
+  players: PlayersAnswers
 }
 
 export type Questionnaire = Array<QuestionKey>;

@@ -22,6 +22,7 @@ import firebase, {
   getQuestionsFromQuestionKeys,
   overrideResponseAsCorrect,
   getPlayerAnswerByRound,
+  getGameScore,
 } from '../firebase';
 
 import {
@@ -33,6 +34,7 @@ import {
   gameStarted,
   gameWithQuestions,
   playerResponse,
+  scoreBoard,
 } from './firebaseData/data';
 
 const momentTime = '2017-02-04T00:00:00+00:00';
@@ -57,12 +59,52 @@ describe('firebase', () => {
       });
     });
   });
+  describe('score', () => {
+    beforeEach(async () => {
+      await loadData(scoreBoard);
+    });
+
+    it('should be able to calculate game score', async () => {
+      const scores = await getGameScore('1234', 1);
+      expect(scores).toEqual([
+        {
+          playerKey: 'playerKeyA',
+          score: 1,
+        },
+        {
+          playerKey: 'playerKeyB',
+          score: 1,
+        },
+        {
+          playerKey: 'playerKeyC',
+          score: 1,
+        },
+      ]);
+    });
+    it('should be able to calculate game score', async () => {
+      const scores = await getGameScore('1234', 2);
+      expect(scores).toEqual([
+        {
+          playerKey: 'playerKeyA',
+          score: 2,
+        },
+        {
+          playerKey: 'playerKeyB',
+          score: 1,
+        },
+        {
+          playerKey: 'playerKeyC',
+          score: 2,
+        },
+      ]);
+    });
+  });
   describe('scoreoard', () => {
     beforeEach(async () => {
       await loadData(gameWithQuestions);
     });
 
-    it('should be able to add a player score', async () => {
+    it('should be able to get a player\'s answer', async () => {
       const response = 'my answer';
       answerQuestion('1234', 'playerKey', 0, response);
 

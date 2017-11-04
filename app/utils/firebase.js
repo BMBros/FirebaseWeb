@@ -8,6 +8,8 @@ import type {
   Question,
   Game,
   Player,
+  Answer,
+  PlayersAnswers,
  } from '../types/FirebaseTypes';
 
 // Prod
@@ -328,9 +330,32 @@ export async function overrideResponseAsCorrect(gameKey: string, playerKey: stri
   });
 }
 
-// export function getScore(gameKey: string) {
-//   // TODO
-// }
+export async function getGameScore(gameKey: string, roundsToScore: number) {
+  const gameScoreRef = await getScoreBoardRef(gameKey).once('value');
+  const playerAnswers = gameScoreRef.val();
+  return getGameScoreHelper(playerAnswers, roundsToScore);
+}
+
+function getGameScoreHelper(playerAnswers: PlayersAnswers, roundsToScore: number) {
+  return Object.keys(playerAnswers).map((playerKey) => {
+    const player = playerAnswers[playerKey];
+    const score = _.reduce(player, (result: number, playerAnswer: Answer, index: string) => {
+      if (parseInt(index, 10) >= roundsToScore) {
+        return result;
+      }
+      const isCorrect = playerAnswer.isCorrect || playerAnswer.isCorrectAdminOverride;
+      const pointValue = (playerAnswer.originalQuestion && playerAnswer.originalQuestion.points) || 1;
+      const points = isCorrect ? pointValue : 0;
+
+      return result + points;
+    }, 0);
+
+    return {
+      playerKey,
+      score,
+    };
+  });
+}
 //
 
 // export function onPlayerJoined(gameKey: string) {

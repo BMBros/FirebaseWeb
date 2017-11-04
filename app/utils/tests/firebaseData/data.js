@@ -155,3 +155,44 @@ export const playerResponse = {
     },
   },
 };
+
+export const scoreBoard = {
+  scores: {
+    1234: {
+      playerKeyA: [
+        {
+          isCorrect: true,
+        },
+        {
+          isCorrect: false,
+          isCorrectAdminOverride: true,
+        },
+        {
+          isCorrect: false,
+          isCorrectAdminOverride: true,
+        },
+      ],
+      playerKeyB: [
+        {
+          isCorrect: true,
+        },
+        {
+          isCorrect: false,
+        },
+        {
+          isCorrect: false,
+          isCorrectAdminOverride: true,
+        },
+      ],
+      playerKeyC: [
+        {
+          isCorrect: true,
+        },
+        {
+          isCorrect: false,
+          isCorrectAdminOverride: true,
+        },
+      ],
+    },
+  },
+};
