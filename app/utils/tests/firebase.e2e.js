@@ -189,6 +189,7 @@ describe('firebase', () => {
         await advanceGameRound('1234');
         game = await getGame('1234');
         expect(game.round).toBe(1);
+        expect(game.currentQuestion && game.currentQuestion.key).toBe('B');
       });
       it('should be notified when round changes', async () => {
         const mockCallback = jest.fn();
@@ -200,7 +201,7 @@ describe('firebase', () => {
         expect(mockCallback).not.toBeCalled();
         expect(mockCallback.mock.calls.length).toBe(0);
         await advanceGameRound('1234');
-        // First call will receive both 0 (initial) and 1 (updated)
+        // // First call will receive both 0 (initial) and 1 (updated)
         expect(mockCallback.mock.calls.length).toBe(2);
         await advanceGameRound('1234');
         expect(mockCallback.mock.calls.length).toBe(3);

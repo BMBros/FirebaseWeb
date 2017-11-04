@@ -44,7 +44,7 @@ const getGamePlayersRef = (gameKey: string) => getGameRef(gameKey).child('player
 const getGamePlayerRef = (gameKey: string, playerKey: string) => getGamePlayersRef(gameKey).child(playerKey);
 // const getGameStatusRef = (gameKey: string) => getGameRef(gameKey).child('status');
 const getGameQuestionnaireRef = (gameKey: string) => getGameRef(gameKey).child('questionnaire');
-const getGameQuestioneRef = (gameKey: string) => getGameRef(gameKey).child('currentQuestion');
+// const getGameQuestioneRef = (gameKey: string) => getGameRef(gameKey).child('currentQuestion');
 const getGameRoundRef = (gameKey: string) => getGameRef(gameKey).child('round');
 
 // Players
@@ -221,12 +221,16 @@ export async function advanceGameRound(gameKey: string) {
   const game = await getGame(gameKey);
 
   const nextGameRound = game.round + 1;
-  const question = await getGameQuestionByRound(gameKey, nextGameRound);
+  // const question = await getGameQuestionByRound(gameKey, nextGameRound);
 
-  await Promise.all([
-    getGameRoundRef(gameKey).set(nextGameRound),
-    getGameQuestioneRef(gameKey).set(question),
-  ]);
+  // await Promise.all([
+  await getGameRef(gameKey).update({
+    round: nextGameRound,
+    currentQuestion: game.questions[nextGameRound],
+  });
+    // getGameRoundRef(gameKey).set(nextGameRound),
+    // getGameQuestioneRef(gameKey).set(question),
+  // ]);
 }
 
 export async function startGame(gameKey: string) {

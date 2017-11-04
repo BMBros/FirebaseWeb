@@ -96,6 +96,23 @@ export const gameWithQuestions = {
       status: 'IN-PROGRESS',
       questionnaire: 'A1',
       round: 0,
+      questions: [
+        {
+          key: 'A',
+          question: 'Question A',
+          answer: 'Answer A',
+        },
+        {
+          key: 'B',
+          question: 'Question B',
+          answer: 'Answer B',
+        },
+        {
+          key: 'C',
+          question: 'Question C',
+          answer: 'Answer C',
+        },
+      ],
     },
   },
   questionnaires: {

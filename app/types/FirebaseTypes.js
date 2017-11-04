@@ -35,7 +35,8 @@ export type Question = {
   answer: string,
   // type: 'MULTIPLE-CHOICE' | 'FREEHAND',
   options?: Array<string>,
-  image?: string
+  image?: string,
+  key?: string
 }
 
 export type Answer = {
