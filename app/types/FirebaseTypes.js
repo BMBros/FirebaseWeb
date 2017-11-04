@@ -1,7 +1,7 @@
 // @flow
 
 type GameKey = string;
-type QuestionaireKey = string;
+type QuestionnaireKey = string;
 type GameStatus = 'LOBBY' | 'IN-PROGRESS' | 'COMPLETE';
 type PlayerKey = string;
 type QuestionKey = string;
@@ -12,7 +12,7 @@ export type Player = {
 };
 
 export type Game = {
-  questionnaire: QuestionaireKey,
+  questionnaire: QuestionnaireKey,
   status: GameStatus,
   currentQuestionIndex: number,
   totalQuestions: number,
@@ -42,7 +42,7 @@ export type Answer = {
 }
 
 export type ScoreBoard = {
-  questionnairre: QuestionaireKey,
+  questionnaire: QuestionnaireKey,
   roundsScored: number,
   scores: {
     [key: PlayerKey]: number
@@ -54,7 +54,7 @@ export type ScoreBoard = {
   }
 }
 
-export type Questionairre = Array<QuestionKey>;
+export type Questionnaire = Array<QuestionKey>;
 
 export type Scheme = {
   players: {
@@ -64,7 +64,7 @@ export type Scheme = {
     [key: GameKey]: Game
   },
   questionnaires: {
-    [key: QuestionaireKey]: Questionairre
+    [key: QuestionnaireKey]: Questionnaire
   },
   questions: {
     [key: QuestionKey]: Question

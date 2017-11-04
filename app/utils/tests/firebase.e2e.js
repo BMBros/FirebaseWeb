@@ -16,7 +16,7 @@ import firebase, {
   advanceGameRound,
   startGame,
   onGameRoundChange,
-  offGameRoundChange,
+  getCurrentQuestionByGame,
 } from '../firebase';
 
 import {
@@ -26,6 +26,7 @@ import {
   empty,
   gameAtLobby,
   gameStarted,
+  gameWithQuestions,
 } from './firebaseData/data';
 
 const momentTime = '2017-02-04T00:00:00+00:00';
@@ -38,6 +39,18 @@ describe('firebase', () => {
       done();
     });
   }, 10000);
+  describe.only('questions', () => {
+    beforeEach(async () => {
+      await loadData(gameWithQuestions);
+    });
+
+    it('should create a player and supply the key', async () => {
+      expect(await getCurrentQuestionByGame('1234')).toEqual({
+        answer: 'Answer A',
+        question: 'Question A',
+      });
+    });
+  });
   describe('create player', () => {
     beforeEach(async () => {
       await loadData(empty);
@@ -48,6 +61,7 @@ describe('firebase', () => {
       expect(player.key).toBeDefined();
     });
   });
+
 
   describe('join game', () => {
     beforeEach(async () => {
@@ -171,20 +185,20 @@ describe('firebase', () => {
         expect(game.currentQuestionIndex).toBe(1);
       });
       it('should be notified when round changes', async () => {
+        const mockCallback = jest.fn();
         const game = await getGame('1234');
         expect(game.currentQuestionIndex).toBe(0);
 
-        const onRoundChangeRef = onGameRoundChange('1234', (dataSnapshot) => {
-          console.log('Snapshot change: ', dataSnapshot.val());
-        });
+        const off = onGameRoundChange('1234', mockCallback);
 
+        expect(mockCallback).not.toBeCalled();
+        expect(mockCallback.mock.calls.length).toBe(0);
         await advanceGameRound('1234');
+        // First call will receive both 0 (initial) and 1 (updated)
+        expect(mockCallback.mock.calls.length).toBe(2);
         await advanceGameRound('1234');
-        await advanceGameRound('1234');
-        // game = await getGame('1234');
-        // expect(game.currentQuestionIndex).toBe(1);
-
-        offGameRoundChange('1234', onRoundChangeRef);
+        expect(mockCallback.mock.calls.length).toBe(3);
+        off();
       });
     });
     describe('game at lobby', () => {

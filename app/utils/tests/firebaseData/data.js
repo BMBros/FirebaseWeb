@@ -40,3 +40,38 @@ export const questions = {
     },
   },
 };
+export const gameWithQuestions = {
+  games: {
+    1234: {
+      status: 'IN-PROGRESS',
+      questionnaire: 'A1',
+      currentQuestionIndex: 0,
+    },
+  },
+  questionnaires: {
+    A1: [
+      'A',
+      'B',
+      'C',
+      'D',
+    ],
+  },
+  questions: {
+    A: {
+      question: 'Question A',
+      answer: 'Answer A',
+    },
+    B: {
+      question: 'Question B',
+      answer: 'Answer B',
+    },
+    C: {
+      question: 'Question C',
+      answer: 'Answer C',
+    },
+    D: {
+      question: 'Question D',
+      answer: 'Answer D',
+    },
+  },
+};

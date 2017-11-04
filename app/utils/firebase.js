@@ -40,6 +40,10 @@ const getGameRef = (gameKey: string) => getGamesRef().child(gameKey);
 const getGamePlayersRef = (gameKey: string) => getGameRef(gameKey).child('players');
 const getGamePlayerRef = (gameKey: string, playerKey: string) => getGamePlayersRef(gameKey).child(playerKey);
 const getGameStatusRef = (gameKey: string) => getGameRef(gameKey).child('status');
+const getGameQuestionnaireRef = (gameKey: string) => getGameRef(gameKey).child('questionnaire');
+const getQuestionnairesRef = () => db.ref('questionnaires');
+const getQuestionnaireRef = (questionnaireKey: string) => getQuestionnairesRef().child(questionnaireKey);
+const getQuestionnaireQuestionByIndexRef = (questionnaireKey: string, index: number) => getQuestionnaireRef(questionnaireKey).child(index);
 const gameQuestionIndexRef = (gameKey: string) => getGameRef(gameKey).child('currentQuestionIndex');
 const getPlayersRef = () => db.ref('players');
 const getPlayerRef = (playerKey: string) => getPlayersRef().child(playerKey);
@@ -184,8 +188,8 @@ export async function getQuestion(questionKey: string): Promise<Question> {
   return question.val();
 }
 export async function getGame(gameKey: string): Promise<Game> {
-  const game = await getGameRef(gameKey).once('value');
-  return game.val();
+  const gameRef = await getGameRef(gameKey).once('value');
+  return gameRef.val();
 }
 export async function getPlayer(playerKey: string): Promise<Player> {
   const player = await getPlayerRef(playerKey).once('value');
@@ -205,19 +209,40 @@ export async function startGame(gameKey: string) {
   if (!isLobby) {
     throw new Error('Can only start game from the lobby');
   }
-  await Promise.all([
-    getGameStatusRef(gameKey).set('IN-PROGRESS'),
-    advanceGameRound(gameKey),
-  ]);
+  // await Promise.all([
+  await getGameStatusRef(gameKey).set('IN-PROGRESS');
+    // advanceGameRound(gameKey),
+  // ]);
 }
 
 export function onGameRoundChange(gameKey: string, callback: Function) {
-  return gameQuestionIndexRef(gameKey).on('value', callback);
-}
-export function offGameRoundChange(gameKey: string, onFunction: Function) {
-  return gameQuestionIndexRef(gameKey).off('value', onFunction);
+  const on = gameQuestionIndexRef(gameKey).on('value', callback);
+  const off = () => gameQuestionIndexRef(gameKey).off('value', on);
+  return off;
 }
 
+// export async function getQuestionFromQuestionnaire(questionnaireKey: string, questionIndex: number) {
+//
+//
+// }
+
+export async function getCurrentQuestionByGame(gameKey: string) {
+  // Query round index and questionnaire key from game
+  const gameRoundRef = await gameQuestionIndexRef(gameKey).once('value');
+  const gameQuestionnaireRef = await getGameQuestionnaireRef(gameKey).once('value');
+
+  // Query question key from questionnaire
+  const questionnaireKey = gameQuestionnaireRef.val();
+  const gameRound = gameRoundRef.val();
+  const questionByIndexRef = await getQuestionnaireQuestionByIndexRef(questionnaireKey, gameRound).once('value');
+
+  // Query question data from questions
+  const questionKey = questionByIndexRef.val();
+  const questionRef = await getQuestionRef(questionKey).once('value');
+
+  // console.log('QuestioN: ', questionRef.val());
+  return questionRef.val();
+}
 
 // export function getScore(gameKey: string) {
 //   // TODO
